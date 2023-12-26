@@ -1,8 +1,11 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.compose.multiplatform)
-    application
 }
+
+version = libs.versions.app.version.get()
 
 dependencies {
     implementation(compose.desktop.currentOs)
@@ -34,8 +37,8 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_19
-    targetCompatibility = JavaVersion.VERSION_19
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.withType<Zip> {
@@ -48,4 +51,46 @@ tasks.withType<Jar> {
 
 tasks.withType<Tar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+compose.desktop {
+
+    application {
+        mainClass = "io.timemates.app.MainKt"
+
+        buildTypes.release {
+            proguard {
+                optimize = true
+                obfuscate = false
+
+                configurationFiles.setFrom(File("src/main/compose-desktop.pro"))
+            }
+        }
+
+        nativeDistributions {
+            packageName = "TimeMates"
+            description = "The ultimate tool for organizing time and tasks, collaborating with team members, and tracking progress."
+            modules("java.instrument", "java.management", "java.sql", "jdk.unsupported")
+
+            val iconsFolder = "src/main/resources/icons"
+
+            outputBaseDir.set(File("build/distributions"))
+
+            windows {
+                iconFile.set(File("$iconsFolder/app-icon.ico"))
+            }
+            macOS {
+                iconFile.set(File("$iconsFolder/app-icon.icns"))
+                dockName = "TimeMates"
+            }
+            linux {
+                iconFile.set(File("$iconsFolder/app-icon.png"))
+            }
+
+            licenseFile.set(rootProject.file("LICENSE.txt"))
+            vendor = "TimeMates"
+
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+        }
+    }
 }
